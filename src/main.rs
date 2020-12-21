@@ -6,6 +6,7 @@ use std::time::Duration;
 mod light;
 use light::Light;
 
+// echo -n "hello" | nc -b -u 127.0.0.1 1982
 fn main() -> Result<(), io::Error> {
     let socket = UdpSocket::bind("0.0.0.0:1982")?;
 
@@ -29,6 +30,7 @@ fn main() -> Result<(), io::Error> {
         if let Ok((bytes_received, src_addr)) = socket.recv_from(&mut buf) {
             let buf = &mut buf[..bytes_received]; //Shrink to size
             println!("{:?} {:?}",bytes_received,src_addr);
+            //println!("{}", std::str::from_utf8(&buf).unwrap());
             let headers = parser(&buf).expect("Failed parsing");
 
             if !lights.iter().any(|light: &Light| light.headers.get("Location") == headers.get("Location")) {
@@ -43,7 +45,8 @@ fn main() -> Result<(), io::Error> {
     }
 
     for mut light in lights {
-        light.toggle();
+        //light.toggle();
+        light.set_bright(10,"smooth", 500);
     }
 
     Ok(())

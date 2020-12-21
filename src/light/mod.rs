@@ -5,6 +5,7 @@ use std::io;
 use regex::Regex;
 use std::net::TcpStream;
 use std::io::{Write,Read};
+use serde::{Deserialize, Serialize};
 
 pub struct Light {
 
@@ -13,6 +14,32 @@ pub struct Light {
 	pub port: u16,
 	pub socket: TcpStream
 
+}
+
+#[derive(Serialize, Deserialize)]
+struct Command {
+	id: u32,
+	method: String,
+	params: Vec<Param>
+}
+
+#[derive(Serialize, Deserialize)]
+//I would call it "Result" but that would interfere.
+struct Response {
+	id: u32,
+	result: Vec<String>
+}
+
+#[derive(Serialize, Deserialize)]
+struct Notification {
+
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Param {
+	Int(u32),
+	String(String)
 }
 
 impl Light {
@@ -31,20 +58,44 @@ impl Light {
 		//let ip = Ipv4Addr::new(127, 0, 0, 1);
 		//let port = 3333;
 
-		let mut socket = TcpStream::connect((ip, port)).expect("Failed connecting to the server");
+		let socket = TcpStream::connect((ip, port)).expect("Failed connecting to the server");
 
 		Ok(Light{headers, ip, port, socket})
 	}
 
-	pub fn toggle(&mut self) -> Result<(), Error> {
-		println!("Attempting toggle");
-		self.socket.write(b"{\"id\":0, \"method\":\"toggle\", \"params\":[]}\r\n");
+	pub fn send_command(&mut self, method: &str, params: Vec<Param>) -> Result<(), Error> {
+		
+		let command = Command {
+			id: 0,
+			method: method.to_owned(),
+			params
+		};
 
+		let mut payload = serde_json::to_string(&command).unwrap();
+
+		payload.push_str("\r\n");
+		let payload = payload;
+
+		println!("{}", payload);
+
+		self.socket.write(payload.as_bytes());
+		
 		let mut buf = [0; 128];
 		self.socket.read(&mut buf)?;
 		println!("{}",std::str::from_utf8(&buf).unwrap());
 
+
 		Ok(())
 	}
 
+	pub fn toggle(&mut self) -> Result<(), Error> {
+		self.send_command("toggle", vec![]);
+		Ok(())
+	}
+
+	pub fn set_bright(&mut self, brightness: u32, effect: &str, duration: u32) -> Result<(), Error> {
+		self.send_command("set_bright", vec![Param::Int(brightness), Param::String(effect.to_owned()), Param::Int(duration)]);
+		Ok(())
+	}
+ 
 }
