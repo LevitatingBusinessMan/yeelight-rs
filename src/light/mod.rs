@@ -7,6 +7,7 @@ use std::net::TcpStream;
 use std::io::{Write,Read};
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug)]
 pub struct Light {
 
 	pub headers: HashMap<String,String>,
