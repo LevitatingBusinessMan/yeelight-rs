@@ -21,7 +21,7 @@ fn main() -> anyhow::Result<()> {
     //We don't want to receive our own messages do we?
     socket.set_multicast_loop_v4(false)?;
 
-    discover(&socket);
+    discover(&socket)?;
 
     let mut buf = [0; 1000];
 
@@ -49,7 +49,7 @@ fn main() -> anyhow::Result<()> {
 
     for mut light in lights {
         //light.toggle();
-        light.set_bright(10,"smooth", 500);
+        light.set_bright(10,"smooth", 500)?;
     }
 
     Ok(())
@@ -82,7 +82,7 @@ fn parser(data: &[u8]) -> Result<HashMap<String,String>, ParserError>  {
     let data = std::str::from_utf8(data);
     let data = match data {
         Ok(data) => data,
-        Err(error) => return Err(ParserError::Invalid),
+        Err(_) => return Err(ParserError::Invalid),
     };
 
     let mut lines = data.lines();

@@ -84,7 +84,7 @@ impl Light {
 
 		println!("{}", payload);
 
-		self.socket.write(payload.as_bytes());
+		self.socket.write(payload.as_bytes())?;
 		
 		let mut buf = [0; 128];
 		self.socket.read(&mut buf)?;
