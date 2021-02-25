@@ -5,7 +5,7 @@ use thiserror::Error;
 pub enum ParserError {
     #[error("Invalid utf8 character in beacon data")]
     Invalid,
-    #[error("Unexpected response header (expected: HTTP/1.1 200 OK, found: {0})")]
+    #[error("Unexpected top header (expected: HTTP/1.1 200 OK, found: {0})")]
     UnexpectedHeader(String),
     #[error("Unable to parse header, no key/value found")]
     UnexpectedEnd
@@ -22,7 +22,7 @@ pub fn parser(data: &[u8]) -> Result<HashMap<String,String>, ParserError>  {
 
     let protocol_header = lines.next();
 
-    if  protocol_header != Some("HTTP/1.1 200 OK") {
+    if  protocol_header != Some("HTTP/1.1 200 OK") && protocol_header != Some("NOTIFY * HTTP/1.1") {
         return Err(ParserError::UnexpectedHeader(protocol_header.unwrap_or("None").to_owned()))
     }
 
