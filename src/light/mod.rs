@@ -42,6 +42,12 @@ pub enum Param {
 	String(String)
 }
 
+/**
+ * Gotta start thinking about how to handle async use here.
+ * Can the result include some kind of promise? Futures?
+ * Will every light get its own thread to listen for calls? Also future crate?
+ */
+
 impl Light {
 	pub fn new(headers: HashMap<String,String>) -> Result<Light, Error> {
 		
@@ -89,13 +95,11 @@ impl Light {
 	}
 
 	pub fn toggle(&mut self) -> Result<(), Error> {
-		self.send_command("toggle", vec![]);
-		Ok(())
+		self.send_command("toggle", vec![])
 	}
 
 	pub fn set_bright(&mut self, brightness: u32, effect: &str, duration: u32) -> Result<(), Error> {
-		self.send_command("set_bright", vec![Param::Int(brightness), Param::String(effect.to_owned()), Param::Int(duration)]);
-		Ok(())
+		self.send_command("set_bright", vec![Param::Int(brightness), Param::String(effect.to_owned()), Param::Int(duration)])
 	}
  
 }
