@@ -12,7 +12,7 @@ fn main() {
 	let mut buf = [0; 1000];
 	let mut lights = Vec::<Light>::new();
 
-	socket.set_read_timeout(Some(std::time::Duration::new(1000, 0))).unwrap();
+	socket.set_read_timeout(Some(std::time::Duration::new(5, 0))).unwrap();
 
 	loop {
         if let Ok((bytes_received, src_addr)) = socket.recv_from(&mut buf) {

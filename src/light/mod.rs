@@ -36,7 +36,7 @@ struct Notification {
 
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum Param {
 	Int(u32),
@@ -70,7 +70,7 @@ impl Light {
 		Ok(Light{headers, ip, port, socket})
 	}
 
-	pub fn send_command(&mut self, method: &str, params: Vec<Param>) -> Result<(), Error> {
+	pub fn send_command(&mut self, method: &str, params: Vec<Param>) -> Result<String, Error> {
 		
 		let command = Command {
 			id: 0,
@@ -83,24 +83,26 @@ impl Light {
 		payload.push_str("\r\n");
 		let payload = payload;
 
-		println!("{}", payload);
+		//println!("{}", payload);
 
 		self.socket.write(payload.as_bytes())?;
-		
+
 		let mut buf = [0; 128];
 		self.socket.read(&mut buf)?;
-		println!("{}",std::str::from_utf8(&buf).unwrap());
 
+		let result = String::from_utf8(buf.to_vec()).unwrap();
 
-		Ok(())
+		Ok(result)
 	}
 
 	pub fn toggle(&mut self) -> Result<(), Error> {
-		self.send_command("toggle", vec![])
+		self.send_command("toggle", vec![])?;
+		Ok(())
 	}
 
 	pub fn set_bright(&mut self, brightness: u32, effect: &str, duration: u32) -> Result<(), Error> {
-		self.send_command("set_bright", vec![Param::Int(brightness), Param::String(effect.to_owned()), Param::Int(duration)])
+		self.send_command("set_bright", vec![Param::Int(brightness), Param::String(effect.to_owned()), Param::Int(duration)])?;
+		Ok(())
 	}
  
 }
