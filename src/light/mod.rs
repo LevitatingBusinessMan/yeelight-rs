@@ -13,7 +13,8 @@ pub struct Light {
 	pub headers: HashMap<String,String>,
 	pub ip: Ipv4Addr,
 	pub port: u16,
-	pub socket: TcpStream
+	pub socket: TcpStream,
+	last_id: u32
 
 }
 
@@ -24,9 +25,9 @@ struct Command {
 	params: Vec<Param>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 //I would call it "Result" but that would interfere.
-struct Response {
+pub struct Response {
 	id: u32,
 	result: Vec<String>
 }
@@ -67,13 +68,20 @@ impl Light {
 
 		let socket = TcpStream::connect((ip, port)).expect("Failed connecting to the server");
 
-		Ok(Light{headers, ip, port, socket})
+		let last_id = 999;
+
+		Ok(Light{headers, ip, port, socket, last_id})
 	}
 
-	pub fn send_command(&mut self, method: &str, params: Vec<Param>) -> Result<String, Error> {
-		
+	pub fn send_command(&mut self, method: &str, params: Vec<Param>) -> Result<Response, Error> {
+
+		self.last_id += 1;
+		if self.last_id == 1000 {
+			self.last_id = 0;
+		}
+
 		let command = Command {
-			id: 0,
+			id: self.last_id,
 			method: method.to_owned(),
 			params
 		};
@@ -88,21 +96,30 @@ impl Light {
 		self.socket.write(payload.as_bytes())?;
 
 		let mut buf = [0; 128];
-		self.socket.read(&mut buf)?;
+		loop {
+			//read_to_string here causes it to read null bytes indefinitely
+			let len = self.socket.read(&mut buf)?;
 
-		let result = String::from_utf8(buf.to_vec()).unwrap();
+			let response = String::from_utf8(buf[0..len].to_vec()).unwrap();
 
-		Ok(result)
+			// if it doesn't include id it's prob a prop update
+			if response.contains("id") {
+				let result: Response = serde_json::from_str(&response[0..response.len()-2])?;
+				if result.id == self.last_id {
+					return Ok(result);
+				}
+			}
+		}
 	}
 
-	pub fn toggle(&mut self) -> Result<(), Error> {
-		self.send_command("toggle", vec![])?;
-		Ok(())
+	pub fn toggle(&mut self) -> Result<Response, Error> {
+		let res = self.send_command("toggle", vec![])?;
+		Ok(res)
 	}
 
-	pub fn set_bright(&mut self, brightness: u32, effect: &str, duration: u32) -> Result<(), Error> {
-		self.send_command("set_bright", vec![Param::Int(brightness), Param::String(effect.to_owned()), Param::Int(duration)])?;
-		Ok(())
+	pub fn set_bright(&mut self, brightness: u32, effect: &str, duration: u32) -> Result<Response, Error> {
+		let res = self.send_command("set_bright", vec![Param::Int(brightness), Param::String(effect.to_owned()), Param::Int(duration)])?;
+		Ok(res)
 	}
  
 }

@@ -41,7 +41,7 @@ fn main() {
                     let res = new_light.send_command(&method, params.clone()).expect("Error sending command");
                     
                     //https://github.com/rust-lang/rust/issues/46016
-                    let write_res = write!(std::io::stdout(),"{}",res);
+                    let write_res = writeln!(std::io::stdout(),"{}",serde_json::to_string(&res).expect("Unable to parse response"));
 
                     if write_res.is_err() {
                         std::process::exit(141);

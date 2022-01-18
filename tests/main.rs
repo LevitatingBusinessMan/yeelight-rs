@@ -6,13 +6,14 @@ fn main() {
 
 	//Create a socket for discovery
 	let socket = bind_broadcast_socket().unwrap();
-	discover(&socket).unwrap();
 
     //This won't go to vec for whatever reason
 	let mut buf = [0; 1000];
 	let mut lights = Vec::<Light>::new();
 
-	socket.set_read_timeout(Some(std::time::Duration::new(5, 0))).unwrap();
+	socket.set_read_timeout(Some(std::time::Duration::new(3, 0))).unwrap();
+
+    discover(&socket).unwrap();
 
 	loop {
         if let Ok((bytes_received, src_addr)) = socket.recv_from(&mut buf) {
@@ -33,8 +34,7 @@ fn main() {
     }
 
     for mut light in lights {
-        //light.toggle();
-        light.set_bright(10,"smooth", 500).unwrap();
+        println!("{:?}", light.toggle().unwrap());
     }
 
 }
